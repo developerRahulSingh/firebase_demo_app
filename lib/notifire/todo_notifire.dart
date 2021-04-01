@@ -26,7 +26,6 @@ class TodoNotifier with ChangeNotifier {
   }
 
   deleteTodo(Todo todo) {
-    print('deleteTodo notifire ==>> $todo');
     _todoList.removeWhere((_todo) => _todo.id == todo.id);
     notifyListeners();
   }

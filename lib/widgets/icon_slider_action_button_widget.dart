@@ -1,21 +1,26 @@
 import 'package:FirebaseDemoApp/api/todo_api.dart';
-import 'package:FirebaseDemoApp/auth/firebase_auth.dart';
 import 'package:FirebaseDemoApp/model/todo_model.dart';
 import 'package:FirebaseDemoApp/notifire/todo_notifire.dart';
-import 'package:FirebaseDemoApp/widgets/icon_slider_action_button_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:provider/provider.dart';
 
-class HomeScreen extends StatefulWidget {
+class IconSliderActionButtonWidget extends StatefulWidget {
+  final data;
+  final bool isUpdate;
+
+  IconSliderActionButtonWidget({Key key, this.data, this.isUpdate})
+      : super(key: key);
+
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  _IconSliderActionButtonWidgetState createState() =>
+      _IconSliderActionButtonWidgetState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _IconSliderActionButtonWidgetState
+    extends State<IconSliderActionButtonWidget> {
   final GlobalKey _formKey = GlobalKey<FormState>();
   Todo _currentTodo;
-  bool isUpdate = false;
   TextEditingController _noteField = new TextEditingController();
 
   @override
@@ -26,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (todoNotifier.currentTodo != null) {
       _currentTodo = todoNotifier.currentTodo;
     } else {
-      _currentTodo = Todo();
+      _currentTodo = widget.data;
     }
   }
 
@@ -69,6 +74,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    TodoNotifier todoNotifier = Provider.of<TodoNotifier>(context);
+
     void showAddNote(bool isUpdate) {
       showDialog(
         context: context,
@@ -133,79 +140,98 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    TodoNotifier todoNotifier = Provider.of<TodoNotifier>(context);
+    // TodoNotifier todoNotifier = Provider.of<TodoNotifier>(context);
     getTodo(todoNotifier);
     Future<void> _refreshList() async {
       getTodo(todoNotifier);
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: Text('Todo List'),
-        actions: <Widget>[
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: MaterialButton(
-              onPressed: () {
-                context.read<FirebaseAuthService>().signOut();
-              },
-              child: Text(
-                'Logout',
-                style: TextStyle(
-                  color: Colors.white70,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
-        onPressed: () {
-          showAddNote(false);
-        },
-      ),
-      backgroundColor: Colors.grey[800],
-      body: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              height: MediaQuery.of(context).size.height / 1.4,
-              width: MediaQuery.of(context).size.width,
-              child: ListView.builder(
-                itemCount: todoNotifier.todoList.length,
-                itemBuilder: ((context, index) {
-                  return Slidable(
-                    actionPane: SlidableDrawerActionPane(),
-                    actionExtentRatio: 0.25,
-                    child: Container(
-                      color: Colors.white,
-                      child: ListTile(
-                        title:
-                            Text('${todoNotifier.todoList[index].description}'),
-                      ),
-                    ),
-                    actions: <Widget>[
-                      IconSliderActionButtonWidget(
-                        data: todoNotifier.todoList[index],
-                        isUpdate: true,
-                      ),
-                    ],
-                    secondaryActions: <Widget>[
-                      IconSliderActionButtonWidget(
-                        data: todoNotifier.todoList[index],
-                        isUpdate: false,
-                      )
-                    ],
-                  );
-                }),
-              ),
-            ),
-          ],
-        ),
-      ),
+    void _showSnackBar(BuildContext context, String text) {
+      Scaffold.of(context).showSnackBar(SnackBar(content: Text(text)));
+    }
+
+    _onTodoDeleted(Todo todo) {
+      todoNotifier.deleteTodo(widget.data);
+    }
+
+    return IconSlideAction(
+      caption: widget.isUpdate ? 'Edit' : 'Delete',
+      color: widget.isUpdate ? Colors.blue : Colors.red,
+      icon: widget.isUpdate ? Icons.archive : Icons.delete,
+      onTap: () => {
+        // _showSnackBar(context, 'Delete'),
+        if (widget.isUpdate)
+          {
+            showAddNote(widget.isUpdate),
+            _showSnackBar(context, 'Edited'),
+          }
+        else
+          {
+            deleteTodo(widget.data, _onTodoDeleted),
+            _showSnackBar(context, 'Delete'),
+          }
+      },
     );
   }
 }
+
+// import 'package:FirebaseDemoApp/api/todo_api.dart';
+// import 'package:FirebaseDemoApp/model/todo_model.dart';
+// import 'package:FirebaseDemoApp/notifire/todo_notifire.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter_slidable/flutter_slidable.dart';
+// import 'package:provider/provider.dart';
+//
+// class IconSliderActionButtonWidget extends StatefulWidget {
+//   final data;
+//   final bool isUpdate;
+//
+//   IconSliderActionButtonWidget({Key key, this.data, this.isUpdate}) : super(key: key);
+//
+//   @override
+//   _IconSliderActionButtonWidgetState createState() =>
+//       _IconSliderActionButtonWidgetState();
+// }
+//
+// class _IconSliderActionButtonWidgetState
+//     extends State<IconSliderActionButtonWidget> {
+//   //
+//   // @override
+//   // void initState() {
+//   //   super.initState();
+//   //   TodoNotifier todoNotifier =
+//   //   Provider.of<TodoNotifier>(context, listen: false);
+//   //   if (todoNotifier.currentTodo != null) {
+//   //     _currentTodo = widget.data;
+//   //   } else {
+//   //     _currentTodo = Todo();
+//   //   }
+//   // }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     TodoNotifier todoNotifier = Provider.of<TodoNotifier>(context);
+//
+//     void _showSnackBar(BuildContext context, String text) {
+//       Scaffold.of(context).showSnackBar(SnackBar(content: Text(text)));
+//     }
+//
+//     _onTodoDeleted(Todo todo) {
+//       todoNotifier.deleteTodo(widget.data);
+//     }
+//
+//     return IconSlideAction(
+//       caption: 'Delete',
+//       color: Colors.red,
+//       icon: Icons.delete,
+//       onTap: () => {
+//         _showSnackBar(context, 'Delete'),
+//         if (widget.isUpdate == false){
+//           deleteTodo(widget.data, _onTodoDeleted)
+//         } else {
+//
+//         }
+//       },
+//     );
+//   }
+// }
